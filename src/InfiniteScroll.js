@@ -28,10 +28,12 @@ class InfiniteScroll extends Component {
 			lBound: 0, //index of a first visible message
 			listHeight: 0,//total visible height of the message list
 			messages: [],//messages
-			moveDelta: 0,//current scroll distance
+			moveDeltaY: 0,//current scroll distance
 			pageToken: null,//API pagination token
 			removedChildrenOffset: [],//collection of all previous children heights
-			scrolling: false,
+			isScrolling: false,
+			isDragging: false,
+			startX: 0,//initial tap/click position of the current scroll
 			startY: 0,//initial tap/click position of the current scroll
 			prevOffset: 0,//offset prior to current scrolling
 			totalChildOffset: 0,//sum of all previous children heights
@@ -39,6 +41,7 @@ class InfiniteScroll extends Component {
 		};
 
 		this.calculateListSize = this.calculateListSize.bind(this);
+		this.deleteChild = this.deleteChild.bind(this);
 		this.hideChild = this.hideChild.bind(this);
 		this.loadMessages = this.loadMessages.bind(this);
 		this.onMove = this.onMove.bind(this);
@@ -82,6 +85,13 @@ class InfiniteScroll extends Component {
 		this.setState({listHeight, visibleCount: Math.ceil(listHeight/MSG_HEIGHT)});
 	}
 	/**
+		Removes message by provided id
+		@param {String} id = id of the message to be removed
+	*/
+	deleteChild(id){
+		this.setState({isDragging: false, isScrolling: false, prevOffset: this.state.currentOffset, messages: this.state.messages.filter(msg=>msg.id!==id)});
+	}
+	/**
 		Shifts left bound of messages being displayed
 		@param {Number} height - height of the child being "hidden" - used to update container padding
 	*/
@@ -95,46 +105,53 @@ class InfiniteScroll extends Component {
 		Terminates scrolling and stores scrolled offset as previous offset
 	*/
 	stopScroll(){
-		this.setState({scrolling: false, prevOffset: this.state.currentOffset});
+		this.setState({isScrolling: false, isDragging: false, prevOffset: this.state.currentOffset});
 	}
 	/**
 		Starts scrolling and captures initial event position used to determine scroll distance
 	*/
 	startScroll(e){
-		const y = e.touches && e.touches.length>0?e.touches[0].pageY:e.pageY;
-		this.setState({ scrolling: true, startY: y});
+		const x = e.touches && e.touches.length>0?e.touches[0].pageX:e.pageX,
+		 	y = e.touches && e.touches.length>0?e.touches[0].pageY:e.pageY;
+		this.setState({ isScrolling: true, startY: y, startX: x});
 	}
 	/**
 		Move handler
 	*/
 	onMove(e){
-		const y = e.touches && e.touches.length>0?e.touches[0].pageY:e.pageY;
-		if(!this.state.scrolling){
+		const x = e.touches && e.touches.length>0?e.touches[0].pageX:e.pageX,
+		 	y = e.touches && e.touches.length>0?e.touches[0].pageY:e.pageY;
+		if(!this.state.isScrolling){
 			return;
 		}
 		const {lBound}= this.state,
-			moveDelta = this.state.startY - y;
-		let currentOffset = this.state.prevOffset - moveDelta,
-			newLBound = lBound,
-			removedChildrenOffset = this.state.removedChildrenOffset,
-			totalChildOffset = this.state.totalChildOffset;
+			moveDeltaY = this.state.startY - y,
+			moveDeltaX = this.state.startX - x;
+		if(Math.abs(moveDeltaX) > Math.abs(moveDeltaY)){
+			this.setState({isDragging: true});
+		}else{
+			let currentOffset = this.state.prevOffset - moveDeltaY,
+				newLBound = lBound,
+				removedChildrenOffset = this.state.removedChildrenOffset,
+				totalChildOffset = this.state.totalChildOffset;
 
-		//Prevent scrolling past first message
-		if(currentOffset > 0 && lBound<=0){
-			currentOffset = 0;
+			//Prevent scrolling past first message
+			if(currentOffset > 0 && lBound<=0){
+				currentOffset = 0;
+			}
+			//Checking if message left bound should be shifted
+			if(moveDeltaY < 0 && lBound>0 && currentOffset + MSG_HEIGHT + totalChildOffset > 0){
+				newLBound--;
+				totalChildOffset -= removedChildrenOffset.pop();
+			}
+			this.setState({moveDeltaY, currentOffset: currentOffset, totalChildOffset, lBound: newLBound, removedChildrenOffset});
 		}
-		//Checking if message left bound should be shifted
-		if(moveDelta < 0 && lBound>0 && currentOffset + MSG_HEIGHT + totalChildOffset > 0){
-			newLBound--;
-			totalChildOffset -= removedChildrenOffset.pop();
-		}
-		this.setState({moveDelta, currentOffset: currentOffset, totalChildOffset, lBound: newLBound, removedChildrenOffset});
 	}
 	/**
 		Fetches messages from API endpoint
 	*/
 	loadMessages() {
-		if(this.state.isFetching){
+		if(this.state.isFetching || this.state.isError){
 			return;
 		}
 		this.setState({
@@ -154,16 +171,16 @@ class InfiniteScroll extends Component {
 						],
 					});
 				})
-				.catch((err) => {
+				.catch(() => {
 					this.setState({
-						error: err.message,
+						isError: true,
 						isFetching: false,
 					});
 				})
 		});
 	}
 	render() {
-		const {isFetching, lBound, visibleCount, messages, currentOffset, moveDelta, totalChildOffset} = this.state;
+		const {isFetching, isDragging, lBound, visibleCount, messages, currentOffset, moveDeltaY, totalChildOffset} = this.state;
 		//Setting styles to perform scrolling as well as to account for hidden children offset
 		const style = {
 			transform: `translate3d(0px, ${currentOffset}px, 0px)`,
@@ -171,8 +188,8 @@ class InfiniteScroll extends Component {
 		}
 
 		const messagesComponents = messages.slice(lBound,visibleCount+lBound).map((msg, ind)=>{
-			const isAbsolute = currentOffset<0 && ind === 0 && moveDelta < 0;
-			return <Message {...msg} hideMe={this.hideChild} key={msg.id} index={ind} isAbsolute={isAbsolute} offset={currentOffset}/>;
+			const isAbsolute = currentOffset<0 && ind === 0 && moveDeltaY < 0;
+			return <Message {...msg} isDraggable={isDragging} hideMe={this.hideChild} deleteMe={this.deleteChild} key={msg.id} index={ind} isAbsolute={isAbsolute} offset={currentOffset}/>;
 		});
 
 		return <ul className="MessageList" ref={r=>this.element = r} style={style}>
