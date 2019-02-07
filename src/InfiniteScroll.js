@@ -51,10 +51,10 @@ class InfiniteScroll extends Component {
 		window.addEventListener('resize', this.calculateListSize);
 		window.addEventListener('mousedown', this.startScroll);
 		window.addEventListener('mouseup', this.stopScroll);
+		window.addEventListener('mousemove', debounce(this.onMove, 10));
 		window.addEventListener('touchstart', this.startScroll);
 		window.addEventListener('touchend', this.stopScroll);
 		window.addEventListener('touchmove', debounce(this.onMove, 10));
-		window.addEventListener('mousemove', debounce(this.onMove, 10));
 	}
 	componentWillUnmount(){
 		window.removeEventListener('resize', this.calculateListSize);
@@ -101,18 +101,19 @@ class InfiniteScroll extends Component {
 		Starts scrolling and captures initial event position used to determine scroll distance
 	*/
 	startScroll(e){
-		this.setState({ scrolling: true, startY: e.pageY});
+		const y = e.touches && e.touches.length>0?e.touches[0].pageY:e.pageY;
+		this.setState({ scrolling: true, startY: y});
 	}
 	/**
 		Move handler
 	*/
 	onMove(e){
+		const y = e.touches && e.touches.length>0?e.touches[0].pageY:e.pageY;
 		if(!this.state.scrolling){
 			return;
 		}
-		e.preventDefault();
 		const {lBound}= this.state,
-			moveDelta = this.state.startY - e.pageY;
+			moveDelta = this.state.startY - y;
 		let currentOffset = this.state.prevOffset - moveDelta,
 			newLBound = lBound,
 			removedChildrenOffset = this.state.removedChildrenOffset,
