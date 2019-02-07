@@ -65,7 +65,9 @@ body, html, #root{
     margin: 0;
     cursor: pointer;
     transition: transform .1s ease-in-out;
+
     .Message{
+        user-select: none;
         transition: transform .1s ease-in-out;
         position: relative;
         background-color: $white;

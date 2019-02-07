@@ -108,6 +108,9 @@ class InfiniteScroll extends Component {
 		Move handler
 	*/
 	onMove(e){
+		e.preventDefault && e.preventDefault();
+		e.stopPropagation && e.stopPropagation();
+
 		const x = e.touches && e.touches.length>0?e.touches[0].pageX:e.pageX,
 		 	y = e.touches && e.touches.length>0?e.touches[0].pageY:e.pageY;
 		if(!this.state.isScrolling){
