@@ -17,7 +17,7 @@ class Message extends Component {
 		this.element = null;
 		this.startDrag = this.startDrag.bind(this);
 		this.stopDrag = this.stopDrag.bind(this);
-		this.onMove = this.onMove.bind(this);
+		this.onMove = config.debounce(this.onMove.bind(this), 10);
 	}
 	componentDidMount(){
 		this.element.addEventListener('mousedown', this.startDrag);

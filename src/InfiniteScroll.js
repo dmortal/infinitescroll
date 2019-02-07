@@ -8,17 +8,6 @@ const MSG_HEIGHT = 130;//minimum message height based on the styling
 const FETCH_THRESHOLD = 5;//message threshold which triggers additional messages fetch
 const TOP_PADDING = 15;//accounting for styling padding of the container
 
-const debounce = (fn, time) => {
-  let timeout;
-
-  return function() {
-    const functionCall = () => fn.apply(this, arguments);
-
-    clearTimeout(timeout);
-    timeout = setTimeout(functionCall, time);
-  }
-}
-
 class InfiniteScroll extends Component {
 	constructor(props) {
 		super(props);
@@ -44,7 +33,7 @@ class InfiniteScroll extends Component {
 		this.deleteChild = this.deleteChild.bind(this);
 		this.hideChild = this.hideChild.bind(this);
 		this.loadMessages = this.loadMessages.bind(this);
-		this.onMove = this.onMove.bind(this);
+		this.onMove = config.debounce(this.onMove.bind(this), 10);
 		this.startScroll = this.startScroll.bind(this);
 		this.stopScroll = this.stopScroll.bind(this);
 	}
@@ -54,10 +43,10 @@ class InfiniteScroll extends Component {
 		window.addEventListener('resize', this.calculateListSize);
 		window.addEventListener('mousedown', this.startScroll);
 		window.addEventListener('mouseup', this.stopScroll);
-		window.addEventListener('mousemove', debounce(this.onMove, 10));
+		window.addEventListener('mousemove', this.onMove);
 		window.addEventListener('touchstart', this.startScroll);
 		window.addEventListener('touchend', this.stopScroll);
-		window.addEventListener('touchmove', debounce(this.onMove, 10));
+		window.addEventListener('touchmove', this.onMove);
 	}
 	componentWillUnmount(){
 		window.removeEventListener('resize', this.calculateListSize);
@@ -65,8 +54,8 @@ class InfiniteScroll extends Component {
 		window.removeEventListener('mouseup', this.stopScroll);
 		window.removeEventListener('touchstart', this.startScroll);
 		window.removeEventListener('touchend', this.stopScroll);
-		window.removeEventListener('touchmove', debounce(this.onMove, 10));
-		window.removeEventListener('mousemove', debounce(this.onMove, 10));
+		window.removeEventListener('touchmove', this.onMove);
+		window.removeEventListener('mousemove', this.onMove);
 	}
 	/**
 		Prefetches next messages batch when approaching a threshold on available messages
