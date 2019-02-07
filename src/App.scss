@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+
+$baseFontSize: 14;
+$primaryBackground: #EEEEEE;
+$headerBackground: #673ab7;
+$gray: #AAAAAA;
+$white: #FFFFFF;
+$black: #000000;
+
+@function rem-calc($size) {
+  $remSize: $size / $baseFontSize;
+  @return #{$remSize}rem;
+}
+
+body, html, #root{
+    padding:0;
+    margin: 0;
+    height: 100%;
+    font-family: 'Roboto', sans-serif;
+    background-color: $black;
+}
+.App {
+  background-color: $primaryBackground;
+  margin: 0 auto;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  &-Header{
+      position: relative;
+      z-index: 10;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+
+      padding: 20px;
+      background-color: $headerBackground;
+      color: $white;
+
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+
+      box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.35);
+
+      &Menu{
+          background: url('./assets/hamburger.svg') no-repeat 0 0 transparent;
+          width: 18px;
+          height: 20px;
+          margin-right: 35px;
+      }
+      &Title{
+          margin: 0;
+          font-size: rem-calc(20);
+          font-weight: 400;
+      }
+  }
+}
+.MessageList{
+    z-index: 1;
+    position:relative;
+    list-style-type: none;
+    height: 100%;
+    padding: 15px;
+    margin: 0;
+    cursor: pointer;
+    .Message{
+        position: relative;
+        background-color: $white;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.27);
+        border-radius: 2px;
+
+        margin-bottom: 10px;
+        &Content{
+            padding: 25px 20px;
+        }
+        &Header{
+            margin-bottom: 20px;
+            display: flex;
+            .AuthorThumbnail{
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                margin-right: 15px;
+            }
+            h6{
+                margin: 0;
+                font-size: rem-calc(14);
+                font-weight: 700;
+
+            }
+        }
+    }
+    .LoadingMsg{
+        text-align: center;
+        color: $gray;
+        &:after{
+            content: '';
+            display: block;
+            width: 20px;
+            height: 20px;
+            margin: 10px auto;
+            background-color: $gray;
+
+            border-radius: 100%;
+            animation: scaleout 1.0s infinite ease-in-out;
+        }
+    }
+}
+
+@keyframes scaleout {
+  0% {
+    transform: scale(0);
+  } 100% {
+    transform: scale(1.0);
+    opacity: 0;
+  }
+}
+@media only screen and (min-width: 400px){
+    .App{
+        max-width: 400px;
+    }
+}
