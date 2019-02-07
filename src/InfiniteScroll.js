@@ -180,8 +180,7 @@ class InfiniteScroll extends Component {
 		}
 
 		const messagesComponents = messages.slice(lBound,visibleCount+lBound).map((msg, ind)=>{
-			const isAbsolute = currentOffset<0 && ind === 0 && moveDeltaY < 0;
-			return <Message {...msg} isDraggable={isDragging} hideMe={this.hideChild} deleteMe={this.deleteChild} key={msg.id} index={ind} isAbsolute={isAbsolute} offset={currentOffset}/>;
+			return <Message {...msg} isDraggable={isDragging} hideMe={this.hideChild} deleteMe={this.deleteChild} key={msg.id} index={ind} offset={currentOffset}/>;
 		});
 
 		return <ul className="MessageList" ref={r=>this.element = r} style={style}>
