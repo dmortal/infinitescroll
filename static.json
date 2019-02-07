@@ -1,3 +1,4 @@
 {
+"root": "src/",
   "basic_auth": true
 }
