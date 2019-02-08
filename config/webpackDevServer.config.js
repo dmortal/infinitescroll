@@ -13,28 +13,6 @@ const host = process.env.HOST || '0.0.0.0';
 
 module.exports = function(proxy, allowedHost) {
   return {
-  setup: function(app) {
-      app.all('*', function (req, res, next) {
-        if (process.env.AUTH_USER && process.env.AUTH_PASSWORD) {
-          var credentials = auth(req)
-
-          if (
-               !credentials
-               || credentials.name !== process.env.AUTH_USER
-               || credentials.pass !== process.env.AUTH_PASSWORD
-             ) {
-            res.statusCode = 401
-            res.setHeader('WWW-Authenticate',
-                          'Basic realm="Prototype Access"')
-            res.end('Access denied')
-          } else {
-            next()
-          }
-        } else {
-          next()
-        }
-      })
-  },
     // WebpackDevServer 2.4.3 introduced a security fix that prevents remote
     // websites from potentially accessing local content through DNS rebinding:
     // https://github.com/webpack/webpack-dev-server/issues/887
@@ -106,6 +84,26 @@ module.exports = function(proxy, allowedHost) {
     public: allowedHost,
     proxy,
     before(app, server) {
+        app.all('*', function (req, res, next) {
+          if (process.env.AUTH_USER && process.env.AUTH_PASSWORD) {
+            var credentials = auth(req)
+
+            if (
+                 !credentials
+                 || credentials.name !== process.env.AUTH_USER
+                 || credentials.pass !== process.env.AUTH_PASSWORD
+               ) {
+              res.statusCode = 401
+              res.setHeader('WWW-Authenticate',
+                            'Basic realm="Prototype Access"')
+              res.end('Access denied')
+            } else {
+              next()
+            }
+          } else {
+            next()
+          }
+      });
       if (fs.existsSync(paths.proxySetup)) {
         // This registers user provided middleware for proxy reasons
         require(paths.proxySetup)(app);
